@@ -5,6 +5,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import os
+from sklearn.linear_model import LinearRegression
 
 st.set_page_config(
     page_title="Pakistan Economy",
@@ -134,6 +135,50 @@ st.plotly_chart(fig4, use_container_width=True)
 
 st.markdown("---")
 
+# correlation heatmap - shows how indicators relate to each other
+st.subheader("How Economic Indicators Relate to Each Other")
+
+numeric_cols = ["gdp_growth_pct", "inflation_cpi_pct", "unemployment_pct", 
+                "pkr_per_usd", "exports_usd_bn", "imports_usd_bn"]
+
+corr = df[numeric_cols].corr()
+
+fig5 = px.imshow(
+    corr,
+    title="Correlation Heatmap",
+    color_continuous_scale="RdBu_r",
+    aspect="auto"
+)
+
+st.plotly_chart(fig5, use_container_width=True)
+
+st.markdown("---")
+
+# ── ML: INFLATION PREDICTOR ─────────────────────────────
+st.subheader("🔮 Predict Future Inflation")
+st.markdown("Using Linear Regression to predict inflation based on historical trend")
+
+# prepare data for the model
+# X = input (year), y = output (inflation we want to predict)
+X = df[['year']]
+y = df['inflation_cpi_pct']
+
+# create and train the model
+model = LinearRegression()
+model.fit(X, y)
+
+# let user pick a future year
+future_year = st.slider("Select a year to predict", min_value=2026, max_value=2030, value=2026)
+
+# make prediction
+predicted_inflation = model.predict([[future_year]])[0]
+
+st.metric(f"Predicted Inflation for {future_year}", f"{predicted_inflation:.2f}%")
+
+st.info("⚠️ Note: This is a simple linear trend prediction. Real inflation depends on many factors (policy, global events, etc.) that this basic model doesn't account for.")
+
+st.markdown("---")
+
 # key insights section
 st.subheader("Key Insights")
 
@@ -155,26 +200,6 @@ with col2:
 
 st.markdown("---")
 
-# correlation heatmap - shows how indicators relate to each other
-st.subheader("How Economic Indicators Relate to Each Other")
-
-# select only numeric columns for correlation
-numeric_cols = ["gdp_growth_pct", "inflation_cpi_pct", "unemployment_pct", 
-                "pkr_per_usd", "exports_usd_bn", "imports_usd_bn"]
-
-corr = df[numeric_cols].corr()
-
-fig5 = px.imshow(
-    corr,
-    title="Correlation Heatmap",
-    color_continuous_scale="RdBu_r",
-    aspect="auto"
-)
-
-st.plotly_chart(fig5, use_container_width=True)
-
-st.markdown("---")
-
 # footer
 st.markdown("**Data Source:** Kaggle - Pakistan Economic Indicators 2000-2025")
-st.markdown("**Built with:** Python, Streamlit, Plotly, Pandas")
+st.markdown("**Built with:** Python, Streamlit, Plotly, Pandas, Scikit-learn")
